@@ -48,8 +48,7 @@ The dev server defaults to **http://localhost:5173** (Vite). Open that URL in a 
 | `src/pages/` | Route screens: login, register, dashboard, volunteers, needs, assignments, matching, reports |
 | `src/components/` | Shared UI (e.g. sidebar, protected route) |
 | `src/context/AuthContext.jsx` | Auth state and token handling |
-| `src/services/` | API wrappers used by pages |
-| `src/api/axios.js` | Shared Axios instance and interceptors |
+| `src/api/axios.js` | Shared Axios instance, JWT interceptors, and API base URL |
 
 ## Production build
 
@@ -59,6 +58,6 @@ npm run build
 
 Static assets are emitted under `dist/`. Serve `dist/` with any static host or reverse proxy, and ensure `VITE_API_URL` is set at **build time** to your production API URL (Vite inlines `import.meta.env` values into the bundle).
 
-## Note on this folder
+## Backend
 
-The repository may also contain legacy or duplicate backend files under `Frontend/` (for example `server.js`). The **supported** backend for day-to-day development is **`Backend/`**. This frontend expects that API to be available at the URL configured by `VITE_API_URL`.
+The **supported** API is the sibling **`Backend/`** (or `backend/`) Express app. This SPA only talks to it over HTTP using `VITE_API_URL`.
