@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import Layout from '../layouts/Layout';
 import api from '../api/axios';
 import { toast } from 'react-hot-toast';
-import { Zap, MapPin, AlertCircle, ArrowRight, ShieldCheck, Cpu, Loader2 } from 'lucide-react';
+import { MapPin, AlertCircle, ArrowRight, ShieldCheck, Cpu, Loader2, CheckCircle } from 'lucide-react';
 import Button from '../components/ui/Button';
 
 export default function Matching() {
@@ -13,12 +13,22 @@ export default function Matching() {
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading]               = useState(false);
   const [assigning, setAssigning]           = useState(null);
+  const [needCompleted, setNeedCompleted]   = useState(false);
 
   useEffect(() => {
     if (!needId) return;
     setLoading(true);
-    api.get(`/matching/needs/${needId}/recommendations`)
-      .then((res) => setRecommendations(Array.isArray(res.data.recommendations) ? res.data.recommendations : []))
+    setNeedCompleted(false);
+    Promise.all([
+      api.get(`/needs/${needId}`).catch(() => ({ data: {} })),
+      api.get(`/matching/needs/${needId}/recommendations`).catch(() => ({ data: {} })),
+    ])
+      .then(([needRes, matchRes]) => {
+        const need = needRes.data?.data;
+        if (need?.status === 'completed') setNeedCompleted(true);
+        const recs = matchRes.data?.recommendations;
+        setRecommendations(Array.isArray(recs) ? recs : []);
+      })
       .catch(() => toast.error('AI analysis failed.'))
       .finally(() => setLoading(false));
   }, [needId]);
@@ -79,6 +89,15 @@ export default function Matching() {
       {/* Results */}
       {needId && !loading && (
         <>
+          {needCompleted && (
+            <div className="mb-6 flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+              <CheckCircle size={20} className="text-emerald-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold">This mission is completed</p>
+                <p className="text-emerald-800/90 mt-0.5">Volunteer dispatch is closed for this need. You can still review past match scores below.</p>
+              </div>
+            </div>
+          )}
           {recommendations.length === 0 ? (
             <div className="bg-white rounded-xl border border-slate-200 text-center py-24 shadow-sm-soft">
               <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-amber-100">
@@ -156,15 +175,21 @@ export default function Matching() {
                         )}
 
                         <div className="mt-auto">
-                          <Button
-                            variant={isHigh ? 'teal' : 'secondary'}
-                            className="w-full justify-center"
-                            loading={assigning === v._id}
-                            onClick={() => handleAssign(v._id)}
-                          >
-                            Dispatch Operative
-                            <ArrowRight size={16} className="ml-1" />
-                          </Button>
+                          {needCompleted ? (
+                            <div className="w-full text-center text-sm font-medium text-slate-500 py-3 rounded-lg border border-slate-200 bg-slate-50">
+                              Dispatch unavailable — mission completed
+                            </div>
+                          ) : (
+                            <Button
+                              variant={isHigh ? 'teal' : 'secondary'}
+                              className="w-full justify-center"
+                              loading={assigning === v._id}
+                              onClick={() => handleAssign(v._id)}
+                            >
+                              Dispatch Operative
+                              <ArrowRight size={16} className="ml-1" />
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </div>

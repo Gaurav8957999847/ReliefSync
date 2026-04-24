@@ -12,11 +12,19 @@ dotenv.config();
 
 const app = express();
 
+// CORS: local dev + production frontends (comma-separated FRONTEND_URL in .env)
+const defaultOrigins = ["http://localhost:3000", "http://localhost:5173"];
+const extraOrigins = (process.env.FRONTEND_URL || "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+const allowedOrigins = [...new Set([...defaultOrigins, ...extraOrigins])];
+
 // Global middleware
 app.use(helmet());
 app.use(
   cors({
-    origin: ["http://localhost:3000", "http://localhost:5173"], // React + Vite common ports
+    origin: allowedOrigins,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],

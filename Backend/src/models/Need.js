@@ -27,7 +27,7 @@ const needSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "assigned", "in_progress", "completed"],
+      enum: ["pending", "completed"],
       default: "pending",
     },
   },

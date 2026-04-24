@@ -1,5 +1,6 @@
 import assignmentRepository from "../repositories/assignmentRepository.js";
 import volunteerRepository from "../repositories/volunteerRepository.js";
+import needRepository from "../repositories/needRepository.js";
 import emailService from "./emailService.js";
 
 class AssignmentService {
@@ -13,35 +14,28 @@ class AssignmentService {
     };
     const assignment = await assignmentRepository.create(data);
 
-    // 🔥 Send email to the actual Volunteer
+    // Change volunteer to 'on_assignment'
+    try {
+      await volunteerRepository.update(volunteerId, ngoId, {
+        availability: "on_assignment",
+      });
+    } catch (err) {
+      console.error("Failed to update volunteer status:", err.message);
+    }
+
+    // Send email to volunteer
     try {
       const volunteer = await volunteerRepository.findById(volunteerId, ngoId);
-
       if (volunteer && volunteer.email) {
         await emailService.sendAssignmentAlert(
           volunteer.email,
           assignment.needId?.title || "New Task",
         );
-        console.log(
-          `📧 Assignment alert sent to volunteer: ${volunteer.email}`,
-        );
-      } else {
-        console.warn("⚠️ Volunteer email not found");
       }
     } catch (err) {
-      console.error("Failed to send assignment alert:", err.message);
+      console.error("Failed to send assignment email:", err.message);
     }
 
-    return assignment;
-  }
-
-  async getAllAssignments(ngoId) {
-    return await assignmentRepository.findByNgoId(ngoId);
-  }
-
-  async getAssignmentById(id, ngoId) {
-    const assignment = await assignmentRepository.findById(id, ngoId);
-    if (!assignment) throw new Error("Assignment not found");
     return assignment;
   }
 
@@ -52,9 +46,40 @@ class AssignmentService {
       status,
       notes,
     );
-    if (!assignment) throw new Error("Assignment not found");
+
+    // When assignment is completed → diminish the Need + make volunteer available
+    if (status === "completed") {
+      try {
+        const assignmentData = await assignmentRepository.findById(id, ngoId);
+
+        if (assignmentData && assignmentData.needId) {
+          // Diminish the Need (mark as completed)
+          await needRepository.updateStatus(
+            assignmentData.needId,
+            ngoId,
+            "completed",
+          );
+          console.log(`✅ Need marked as completed / diminished`);
+        }
+
+        if (assignmentData && assignmentData.volunteerId) {
+          // Make volunteer available again
+          await volunteerRepository.update(assignmentData.volunteerId, ngoId, {
+            availability: "available",
+          });
+          console.log(`✅ Volunteer status changed back to available`);
+        }
+      } catch (err) {
+        console.error("Failed to update status after completion:", err.message);
+      }
+    }
+
     return assignment;
   }
+
+  async getAllAssignments(ngoId) {
+    return await assignmentRepository.findByNgoId(ngoId);
+  }
 }
-//sending the instance of the class
+
 export default new AssignmentService();

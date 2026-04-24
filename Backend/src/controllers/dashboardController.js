@@ -1,6 +1,6 @@
-import needRepository from '../repositories/needRepository.js';
-import assignmentRepository from '../repositories/assignmentRepository.js';
-import volunteerRepository from '../repositories/volunteerRepository.js';
+import needRepository from "../repositories/needRepository.js";
+import assignmentRepository from "../repositories/assignmentRepository.js";
+import volunteerRepository from "../repositories/volunteerRepository.js";
 
 const getOverview = async (req, res, next) => {
   try {
@@ -9,18 +9,21 @@ const getOverview = async (req, res, next) => {
     const [needs, assignments, volunteers] = await Promise.all([
       needRepository.findByNgoId(ngoId),
       assignmentRepository.findByNgoId(ngoId),
-      volunteerRepository.findByNgoId(ngoId)
+      volunteerRepository.findByNgoId(ngoId),
     ]);
 
-    const criticalNeeds = needs.filter(n => n.priority === 'critical').length;
-    const activeAssignments = assignments.filter(a => 
-      ['pending', 'assigned', 'in_progress'].includes(a.status)
+    const criticalNeeds = needs.filter((n) => n.priority === "critical").length;
+    const activeAssignments = assignments.filter((a) =>
+      ["pending", "assigned", "in_progress"].includes(a.status),
     ).length;
-    const completedAssignments = assignments.filter(a => a.status === 'completed').length;
+    const completedAssignments = assignments.filter(
+      (a) => a.status === "completed",
+    ).length;
 
-    const completionRate = assignments.length > 0 
-      ? Math.round((completedAssignments / assignments.length) * 100) 
-      : 0;
+    const completionRate =
+      assignments.length > 0
+        ? Math.round((completedAssignments / assignments.length) * 100)
+        : 0;
 
     res.json({
       success: true,
@@ -32,8 +35,10 @@ const getOverview = async (req, res, next) => {
         activeAssignments,
         completedAssignments,
         completionRate,
-        availableVolunteers: volunteers.filter(v => v.availability === 'available').length
-      }
+        availableVolunteers: volunteers.filter(
+          (v) => v.availability === "available",
+        ).length,
+      },
     });
   } catch (err) {
     next(err);
@@ -44,12 +49,12 @@ const getCriticalNeeds = async (req, res, next) => {
   try {
     const ngoId = req.user.ngoId;
     const needs = await needRepository.findByNgoId(ngoId);
-    const criticalNeeds = needs.filter(n => n.priority === 'critical');
+    const criticalNeeds = needs.filter((n) => n.priority === "critical");
 
     res.json({
       success: true,
       count: criticalNeeds.length,
-      data: criticalNeeds
+      data: criticalNeeds,
     });
   } catch (err) {
     next(err);
@@ -60,14 +65,16 @@ const getActiveAssignments = async (req, res, next) => {
   try {
     const ngoId = req.user.ngoId;
     const assignments = await assignmentRepository.findByNgoId(ngoId);
-    const active = assignments.filter(a => 
-      ['pending', 'assigned', 'in_progress'].includes(a.status)
+
+    // Option 1: Show only active (non-completed) assignments
+    const active = assignments.filter((a) =>
+      ["pending", "assigned", "in_progress"].includes(a.status),
     );
 
     res.json({
       success: true,
       count: active.length,
-      data: active
+      data: active,
     });
   } catch (err) {
     next(err);
@@ -81,23 +88,25 @@ const getVolunteerStats = async (req, res, next) => {
 
     const stats = {
       total: volunteers.length,
-      available: volunteers.filter(v => v.availability === 'available').length,
-      busy: volunteers.filter(v => v.availability === 'busy').length,
-      onAssignment: volunteers.filter(v => v.availability === 'on_assignment').length
+      available: volunteers.filter((v) => v.availability === "available")
+        .length,
+      busy: volunteers.filter((v) => v.availability === "busy").length,
+      onAssignment: volunteers.filter((v) => v.availability === "on_assignment")
+        .length,
     };
 
     res.json({
       success: true,
-      data: stats
+      data: stats,
     });
   } catch (err) {
     next(err);
   }
 };
 
-export { 
-  getOverview, 
-  getCriticalNeeds, 
-  getActiveAssignments, 
-  getVolunteerStats 
+export {
+  getOverview,
+  getCriticalNeeds,
+  getActiveAssignments,
+  getVolunteerStats,
 };

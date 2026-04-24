@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '../layouts/Layout';
 import api from '../api/axios';
 import { toast } from 'react-hot-toast';
-import { AlertTriangle, MapPin, Zap, Loader2, Clock, Target, Search, ChevronRight } from 'lucide-react';
+import { AlertTriangle, MapPin, Loader2, Clock, Target, Search, ChevronRight, CheckCircle } from 'lucide-react';
 import Button from '../components/ui/Button';
 
 const priorityConfig = {
@@ -122,15 +122,22 @@ export default function Needs() {
 
                   {/* Action */}
                   <div className="pt-5 border-t border-slate-100 mt-auto">
-                    <Button
-                      variant="primary"
-                      size="md"
-                      className="w-full justify-center"
-                      onClick={() => navigate(`/matching?needId=${need._id}`)}
-                    >
-                      Find Volunteers
-                      <ChevronRight size={16} className="ml-1" />
-                    </Button>
+                    {need.status === 'completed' ? (
+                      <div className="flex items-center justify-center gap-2 py-2.5 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-800 text-sm font-semibold">
+                        <CheckCircle size={18} className="text-emerald-600 shrink-0" />
+                        Mission completed
+                      </div>
+                    ) : (
+                      <Button
+                        variant="primary"
+                        size="md"
+                        className="w-full justify-center"
+                        onClick={() => navigate(`/matching?needId=${need._id}`)}
+                      >
+                        Find Volunteers
+                        <ChevronRight size={16} className="ml-1" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
