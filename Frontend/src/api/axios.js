@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const productionApiBase = "https://reliefsync-erc1.onrender.com";
+const productionApiBase = "https://reliefsync-erc1.onrender.com/api";
 
 const api = axios.create({
   baseURL:
